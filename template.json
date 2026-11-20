@@ -1,0 +1,146 @@
+{
+  "name": "Kokoro TTS OpenAI-Compatible Speech API (API Key + Web UI)",
+  "description": "Natural text-to-speech on CPU: OpenAI /v1/audio/speech, 50+ voices.",
+  "category": "AI/ML",
+  "tags": [
+    "kokoro",
+    "tts",
+    "text-to-speech",
+    "openai-compatible",
+    "speech",
+    "voice",
+    "kokoro-82m",
+    "fastapi",
+    "self-hosted",
+    "api"
+  ],
+  "image": "https://cdn.jsdelivr.net/gh/remsky/Kokoro-FastAPI@f2a5270d2ccd9590bc87e2393c774814f23fe7a1/web/favicon.svg",
+  "upstream": {
+    "kokoro-fastapi": "remsky/Kokoro-FastAPI v0.10.0 (Apache-2.0), image ghcr.io/remsky/kokoro-fastapi-cpu:v0.10.0 pinned by index digest; model hexgrad/Kokoro-82M v1.0 (Apache-2.0) baked into the image",
+    "caddy": "caddy:2.11.9-alpine@sha256:003a97808e781aa9f7e75cc2f43d34d461099031faf5e20faefb9f61126836f0",
+    "checked": "2026-11-20"
+  },
+  "services": {
+    "Kokoro TTS": {
+      "icon": "https://cdn.jsdelivr.net/gh/remsky/Kokoro-FastAPI@f2a5270d2ccd9590bc87e2393c774814f23fe7a1/web/favicon.svg",
+      "source": {
+        "repo": "baranberkay96/kokoro-tts-railway",
+        "rootDirectory": "/services/gateway"
+      },
+      "startCommand": null,
+      "preDeployCommand": null,
+      "healthcheckPath": "/_gateway/health",
+      "healthcheckTimeout": 120,
+      "restartPolicyType": "ALWAYS",
+      "numReplicas": 1,
+      "cronSchedule": null,
+      "publicDomain": true,
+      "targetPort": 8080,
+      "tcpProxy": null,
+      "volume": null,
+      "variables": {
+        "KOKORO_API_KEY": {
+          "defaultValue": "${{secret(48, \"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\")}}",
+          "description": "API key for clients: send it as 'Authorization: Bearer {key}' (or xi-api-key / X-API-Key). 16-256 characters of A-Z a-z 0-9 . _ ~ -.",
+          "required": true
+        },
+        "KOKORO_USERNAME": {
+          "defaultValue": "kokoro",
+          "description": "Web player sign-in user name (letters, digits, . _ @ -).",
+          "required": true
+        },
+        "KOKORO_PASSWORD": {
+          "defaultValue": "${{secret(24, \"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\")}}",
+          "description": "Web player sign-in password, generated at deploy. 12-72 characters; anything else locks the web player until you fix it.",
+          "required": true
+        },
+        "PORT": {
+          "defaultValue": "8080",
+          "description": "Gateway port (healthcheck and public domain target).",
+          "required": true
+        },
+        "KOKORO_UPSTREAM": {
+          "defaultValue": "${{kokoro.RAILWAY_PRIVATE_DOMAIN}}:8880",
+          "description": "Kokoro-FastAPI on the private network.",
+          "required": true
+        }
+      }
+    },
+    "kokoro": {
+      "icon": "https://cdn.jsdelivr.net/gh/remsky/Kokoro-FastAPI@f2a5270d2ccd9590bc87e2393c774814f23fe7a1/web/favicon.svg",
+      "source": {
+        "repo": "baranberkay96/kokoro-tts-railway",
+        "rootDirectory": "/services/kokoro"
+      },
+      "startCommand": null,
+      "preDeployCommand": null,
+      "healthcheckPath": "/health",
+      "healthcheckTimeout": 600,
+      "restartPolicyType": "ALWAYS",
+      "numReplicas": 1,
+      "cronSchedule": null,
+      "publicDomain": false,
+      "targetPort": null,
+      "tcpProxy": null,
+      "volume": null,
+      "variables": {
+        "KOKORO_API_KEY": {
+          "defaultValue": "${{Kokoro TTS.KOKORO_API_KEY}}",
+          "description": "The gateway's API key; Kokoro answers 401 to requests without it (/health stays open).",
+          "required": true
+        },
+        "PORT": {
+          "defaultValue": "8880",
+          "description": "Kokoro-FastAPI port, private only.",
+          "required": true
+        },
+        "KOKORO_THREADS": {
+          "defaultValue": "auto",
+          "description": "Inference threads. auto = the service's CPU quota, capped at 8 (the host's core count would oversubscribe).",
+          "required": false
+        },
+        "DEFAULT_VOICE": {
+          "defaultValue": "af_heart",
+          "description": "Voice used when a request names none (see GET /v1/audio/voices).",
+          "required": false
+        },
+        "USE_GPU": {
+          "defaultValue": "false",
+          "description": "CPU inference (Railway has no GPUs).",
+          "required": true
+        },
+        "ENABLE_WEB_PLAYER": {
+          "defaultValue": "true",
+          "description": "Serve the web player at /web/ (behind the gateway sign-in).",
+          "required": false
+        },
+        "ENABLE_DEBUG_ENDPOINTS": {
+          "defaultValue": "false",
+          "description": "Keep host and process introspection routes off.",
+          "required": false
+        },
+        "ALLOW_DEV_UNLOAD": {
+          "defaultValue": "false",
+          "description": "Keep the model unload/reload routes off.",
+          "required": false
+        },
+        "ALLOW_LOCAL_VOICE_SAVING": {
+          "defaultValue": "false",
+          "description": "Do not let callers write combined voices to disk (no volume).",
+          "required": false
+        },
+        "MAX_INPUT_LENGTH": {
+          "defaultValue": "200000",
+          "description": "Characters one request may submit (upstream default 1,000,000).",
+          "required": false
+        },
+        "RAILWAY_DEPLOYMENT_DRAINING_SECONDS": {
+          "defaultValue": "30",
+          "description": "Time running syntheses get to finish on redeploy.",
+          "required": false
+        }
+      }
+    }
+  },
+  "buckets": []
+}

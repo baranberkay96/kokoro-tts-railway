@@ -1,0 +1,69 @@
+# Kokoro TTS gateway: the only public entry.
+#
+#   /_gateway/health                       -> this proxy (Railway healthcheck)
+#   requests with an API key header        -> kokoro, which checks the key itself
+#     (Authorization: Bearer, xi-api-key, X-API-Key)
+#   everything else (browsers)             -> basic auth -> kokoro with the API key added,
+#                                             so the web player at /web/ works after sign-in
+{
+	admin off
+	persist_config off
+	auto_https off
+	servers {
+		# Railway's edge terminates TLS and forwards X-Forwarded-* headers.
+		trusted_proxies static private_ranges 100.0.0.0/8
+	}
+}
+
+(to_kokoro) {
+	header -Server
+	header X-Robots-Tag "noindex, nofollow"
+	reverse_proxy {$KOKORO_UPSTREAM} {
+		flush_interval -1
+		lb_try_duration 30s
+		lb_try_interval 1s
+		transport http {
+			read_timeout 15m
+			write_timeout 15m
+		}
+	}
+}
+
+:{$PORT:8080} {
+	handle /_gateway/health {
+		respond "ok" 200
+	}
+
+	# API clients: the key travels in a header and Kokoro compares it.
+	@bearer header_regexp Authorization (?i)^bearer\s+\S
+	handle @bearer {
+		import to_kokoro
+	}
+	@xi_key header xi-api-key *
+	handle @xi_key {
+		import to_kokoro
+	}
+	@x_key header X-API-Key *
+	handle @x_key {
+		import to_kokoro
+	}
+
+	# Browsers send cached basic-auth credentials on cross-site requests too;
+	# only this site's own pages may use the signed-in path.
+	@cross_site {
+		header Origin *
+		not header Origin https://{host}
+	}
+	handle @cross_site {
+		respond "Cross-origin request refused (use an API key header)" 403
+	}
+
+	handle {
+		basic_auth {
+			{$BASIC_AUTH_USERNAME} {$BASIC_AUTH_HASH}
+		}
+		redir / /web/ 302
+		request_header Authorization "Bearer {$KOKORO_API_KEY}"
+		import to_kokoro
+	}
+}
