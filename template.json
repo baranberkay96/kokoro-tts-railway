@@ -1,6 +1,6 @@
 {
   "name": "Kokoro TTS OpenAI-Compatible Speech API (API Key + Web UI)",
-  "description": "Natural text-to-speech on CPU: OpenAI /v1/audio/speech, 50+ voices.",
+  "description": "Natural text-to-speech on CPU: OpenAI /v1/audio/speech, 70+ voices.",
   "category": "AI/ML",
   "tags": [
     "kokoro",

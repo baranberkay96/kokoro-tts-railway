@@ -49,6 +49,12 @@ export PORT=$port
 # Single-worker uvicorn on :: would be IPv6-only and miss Railway's IPv4 healthcheck.
 export HOST=0.0.0.0
 
+limit=$(cat /sys/fs/cgroup/memory.max 2>/dev/null || echo max)
+case "$limit" in
+'' | max | *[!0-9]*) ;;
+*) [ "$limit" -ge 1503238554 ] || warn "memory limit is $((limit / 1048576)) MiB; the Kokoro model needs about 1.2 GB plus headroom (Hobby plan or higher)" ;;
+esac
+
 cd /app || exit 1
 log "Kokoro-FastAPI $(cat VERSION 2>/dev/null) on $HOST:$PORT, API key required"
 exec ./entrypoint.sh
