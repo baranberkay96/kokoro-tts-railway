@@ -72,7 +72,8 @@ Estimated cost idle: ~1.1 GB × $10 + small CPU ≈ **$11–13/month**. Minimum 
 - Auth: `/` without credentials → 302 → 401; `/v1/models` without key 401, wrong key 401, wrong `xi-api-key` 401; `/v1/audio/voices` with key 200; cross-site request with basic auth 403.
 - Core action: `/v1/audio/speech` with the key (MP3 and WAV) and through the signed-in browser path (MP3); `/web/` serves the player after sign-in.
 - STANDARD 8.29: `KOKORO_PASSWORD=short` → deploy SUCCESS, log says LOCKED, web player 401, API with key still 200.
-- STANDARD 8.31: see "Trial simulation" below.
+- STANDARD 8.31 (Trial simulation): `serviceInstanceLimitsUpdate` to 1 GB / 1 vCPU on `kokoro` → the model load is killed and the deployment FAILED (restart loop while loading weights). Hence Hobby is the stated minimum; the wrapper now logs a warning below 1.4 GB. With 1 vCPU the wrapper chose 1 thread as intended.
+- At boot the upstream entrypoint verifies the baked model and fetches a small tuner config from Hugging Face; a digest mismatch there only logs a warning and the service starts.
 
 ## Verification checklist
 
