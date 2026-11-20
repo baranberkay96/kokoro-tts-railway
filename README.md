@@ -1,5 +1,7 @@
 # Deploy and Host Kokoro TTS with Railway
 
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/kokoro-tts-openai-compatible-speech-api-?referralCode=20H68q)
+
 Kokoro TTS turns text into natural-sounding speech with the open Kokoro-82M model. This community template runs Kokoro-FastAPI on CPU behind a small gateway: an OpenAI-compatible `/v1/audio/speech` API protected by an API key, and a password-protected web player for trying voices in the browser.
 
 ## About Hosting Kokoro TTS
